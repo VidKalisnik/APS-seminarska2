@@ -353,9 +353,9 @@ public class Naloga6 {
       Node i1 = tree.searchElement(Integer.parseInt(factSplit[0]));
       int i2 = Integer.parseInt(factSplit[1]);
       int visitors = Integer.parseInt(factSplit[2]);
-      /*Set path = */shortestPath(tree, i1, i2, visitors);
+      /*Set path =*/shortestPath(i1, i2, visitors);
     }
-
+sdasofaspfhg
     //izracuna za vsako vozlisce koliko caja je prodal in vrne max
     int maxTeaSoldNode = 0;
     int maxVisitorsNode = 0;
@@ -396,7 +396,7 @@ public class Naloga6 {
     out.close();
   }
 
-  public static void shortestPath(AVLTree tree, Node a, int b, int vis) {
+  public static void shortestPath(Node a, int b, int vis) {
     Queue queue = new Queue();
     Set visited = new Set();
 
