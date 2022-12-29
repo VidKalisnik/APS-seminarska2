@@ -1,5 +1,3 @@
-package Task6;
-
 import java.io.*;
 import java.util.Scanner;
 
@@ -93,6 +91,26 @@ class Set {
     }
   }
 
+  public void insertOrdered(Node conn) {
+    // nov element vstavimo samo, ce ga ni med obstojecimi elementi mnozice
+    if (!locate(conn)) {
+      SetElement nov = new SetElement();
+      nov.conn = conn;
+
+      //poisce pozicijo
+      SetElement prev = first;
+      SetElement curr = first.next;
+      while (curr != null && curr.conn.element > nov.conn.element) {
+        prev = curr;
+        curr = curr.next;
+      }
+
+      //vstavi element
+      nov.next = curr;
+      prev.next = nov;
+    }
+  }
+
   public void delete(SetElement pos) {
     pos.next = pos.next.next;
   }
@@ -122,7 +140,7 @@ class Set {
   public void print() {
     System.out.print("{");
     for (SetElement iter = first(); !overEnd(iter); iter = next(iter)) {
-      System.out.print(retrieve(iter));
+      System.out.print(retrieve(iter).element);
       if (!overEnd(next(iter))) System.out.print(", ");
     }
     System.out.println("}");
@@ -132,16 +150,18 @@ class Set {
 class Node {
 
   int element;
-  double percentage;
-  int visitors;
   int h; //visina
   Set connections;
+
+  Node prev;
+  float percentage;
+  int visitors;
 
   Node leftChild;
   Node rightChild;
 
   // parameterized constructor
-  public Node(int element, double percentage) {
+  public Node(int element, float percentage) {
     connections = new Set();
     leftChild = null;
     rightChild = null;
@@ -176,7 +196,7 @@ class AVLTree {
   }
 
   // create insertElement() to insert element to to the AVL Tree
-  public void insertElement(int element, double percentage) {
+  public void insertElement(int element, float percentage) {
     rootNode = insertElement(element, percentage, rootNode);
   }
 
@@ -191,7 +211,7 @@ class AVLTree {
   }
 
   //create insertElement() method to insert data in the AVL Tree recursively
-  private Node insertElement(int element, double percentage, Node node) {
+  private Node insertElement(int element, float percentage, Node node) {
     //System.out.print("*");
     //check whether the node is null or not
     if (node == null) node = new Node(element, percentage);
@@ -300,10 +320,11 @@ public class Naloga6 {
     //prebermo prvo vrstico
     String teaSalesStr = sc.nextLine();
     String[] teaSalesSplit = teaSalesStr.split(",");
+    int numOfNodes = teaSalesSplit.length;
     AVLTree tree = new AVLTree();
-    for (int i = 1; i <= teaSalesSplit.length; i++) {
+    for (int i = 1; i <= numOfNodes; i++) {
       //naredi novo vozlisce in doda podatke
-      tree.insertElement(i, Double.parseDouble(teaSalesSplit[i - 1]));
+      tree.insertElement(i, Float.parseFloat(teaSalesSplit[i - 1]));
     }
 
     //prebere st N in M
@@ -319,28 +340,109 @@ public class Naloga6 {
       Node a = tree.searchElement(Integer.parseInt(connectionSplit[0]));
       Node b = tree.searchElement(Integer.parseInt(connectionSplit[1]));
 
-      a.connections.insert(b);
-      b.connections.insert(a);
+      a.connections.insertOrdered(b);
+      b.connections.insertOrdered(a);
+      //a.connections.print();
+      //b.connections.print();
     }
 
+    //prebere dejstva o turistih in jih zapise...
     for (int i = 0; i < m; i++) {
       String factStr = sc.nextLine();
       String[] factSplit = factStr.split(",");
-      int a = Integer.parseInt(factSplit[0]);
-      int b = Integer.parseInt(factSplit[1]);
+      Node i1 = tree.searchElement(Integer.parseInt(factSplit[0]));
+      int i2 = Integer.parseInt(factSplit[1]);
       int visitors = Integer.parseInt(factSplit[2]);
-      Set path = shortestPath(tree, a, b);
+      /*Set path = */shortestPath(tree, i1, i2, visitors);
+    }
+
+    //izracuna za vsako vozlisce koliko caja je prodal in vrne max
+    int maxTeaSoldNode = 0;
+    int maxVisitorsNode = 0;
+    float maxTeaSold = 0;
+    int maxVisitors = 0;
+
+    //cez vsa vozlisca
+    for (int i = 1; i <= numOfNodes; i++) {
+      Node t = tree.searchElement(i);
+      int visitors_ = t.visitors;
+      float teaSold = ((float) visitors_ * t.percentage);
+      /*System.out.println(
+        i +
+        " - Visitors: " +
+        visitors_ +
+        " Procentage: " +
+        t.percentage +
+        " TeaSold: " +
+        teaSold
+      );*/
+      if (maxTeaSold < teaSold) {
+        maxTeaSold = teaSold;
+        maxTeaSoldNode = i;
+      }
+
+      if (maxVisitors < visitors_) {
+        maxVisitors = visitors_;
+        maxVisitorsNode = i;
+      }
     }
 
     sc.close();
+
+    PrintWriter out = new PrintWriter(args[1]);
+
+    out.println(maxTeaSoldNode + "," + maxVisitorsNode);
+
+    out.close();
   }
 
-  public Set shortestPath(AVLTree tree, int a, int b) {
-    Set path = new Set();
-
+  public static void shortestPath(AVLTree tree, Node a, int b, int vis) {
     Queue queue = new Queue();
     Set visited = new Set();
 
-    return;
+    queue.enqueue(a);
+    visited.insert(a);
+
+    while (!queue.isEmpty()) {
+      //System.out.println(a.element + "-" + b);
+      Node u = queue.dequeue();
+      if (u.element == b) {
+        // found the target node, trace the path using the prev field
+        //System.out.println("*" + a.element + "-" + b);
+        while (u != null) {
+          //path.insert(u);
+          //System.out.println(u.element);
+          u.addVisitors(vis);
+          //Node tmp = u;
+          u = u.prev;
+          //tmp.prev = null;
+        }
+        //System.out.println();
+
+        for (
+          SetElement iter = visited.first();
+          !visited.overEnd(iter);
+          iter = visited.next(iter)
+        ) {
+          Node v = visited.retrieve(iter);
+          v.prev = null;
+        }
+
+        return;
+      }
+
+      for (
+        SetElement iter = u.connections.first();
+        !u.connections.overEnd(iter);
+        iter = u.connections.next(iter)
+      ) {
+        Node v = u.connections.retrieve(iter);
+        if (!visited.locate(v)) {
+          queue.enqueue(v);
+          visited.insert(v);
+          v.prev = u; // set the prev field of v to u
+        }
+      }
+    }
   }
 }
