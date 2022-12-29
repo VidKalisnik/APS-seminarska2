@@ -355,7 +355,7 @@ public class Naloga6 {
       int visitors = Integer.parseInt(factSplit[2]);
       /*Set path =*/shortestPath(i1, i2, visitors);
     }
-sdasofaspfhg
+
     //izracuna za vsako vozlisce koliko caja je prodal in vrne max
     int maxTeaSoldNode = 0;
     int maxVisitorsNode = 0;
