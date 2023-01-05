@@ -1,54 +1,9 @@
 import java.io.*;
+import java.util.*;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.Scanner;
-
-class Queue {
-
-  private class QueueEl {
-
-    Node element;
-    QueueEl next;
-
-    public QueueEl(Node element) {
-      this.element = element;
-      this.next = null;
-    }
-  }
-
-  private QueueEl head;
-  private QueueEl tail;
-
-  public Queue() {
-    head = null;
-    tail = null;
-  }
-
-  public void enqueue(Node element) {
-    QueueEl newNode = new QueueEl(element);
-    if (tail != null) {
-      tail.next = newNode;
-    }
-    tail = newNode;
-    if (head == null) {
-      head = newNode;
-    }
-  }
-
-  public Node dequeue() {
-    if (head == null) {
-      return null;
-    }
-    Node element = head.element;
-    head = head.next;
-    if (head == null) {
-      tail = null;
-    }
-    return element;
-  }
-
-  public boolean isEmpty() {
-    return head == null;
-  }
-}
+import java.util.Set;
 
 class SetElement {
 
@@ -61,11 +16,11 @@ class SetElement {
   }
 }
 
-class Set {
+class Set1 {
 
   private SetElement first;
 
-  public Set() {
+  public Set1() {
     makenull();
   }
 
@@ -151,7 +106,7 @@ class Node {
 
   int element;
   int h; //visina
-  Set connections;
+  Set1 connections;
 
   Node prev;
   float percentage;
@@ -162,7 +117,7 @@ class Node {
 
   // parameterized constructor
   public Node(int element, float percentage) {
-    connections = new Set();
+    connections = new Set1();
     leftChild = null;
     rightChild = null;
     this.element = element;
@@ -397,50 +352,41 @@ public class Naloga6 {
   }
 
   public static void shortestPath(Node a, int b, int vis) {
-    Queue queue = new Queue();
-    Set visited = new Set();
+    Queue<Node> queue = new LinkedList<Node>();
+    Set<Node> visited = new HashSet<Node>();
 
-    queue.enqueue(a);
-    visited.insert(a);
+    queue.add(a);
+    visited.add(a);
 
     while (!queue.isEmpty()) {
       //System.out.println(a.element + "-" + b);
-      Node u = queue.dequeue();
+      Node u = queue.poll();
       if (u.element == b) {
-        // found the target node, trace the path using the prev field
         //System.out.println("*" + a.element + "-" + b);
         while (u != null) {
-          //path.insert(u);
-          //System.out.println(u.element);
           u.addVisitors(vis);
-          //Node tmp = u;
           u = u.prev;
-          //tmp.prev = null;
         }
-        //System.out.println();
 
-        for (
-          SetElement iter = visited.first();
-          !visited.overEnd(iter);
-          iter = visited.next(iter)
-        ) {
-          Node v = visited.retrieve(iter);
+        for (Node v : visited) {
+          //Node v = visited.retrieve(iter);
           v.prev = null;
         }
 
         return;
       }
 
+      //doda vse sosede v vrsto
       for (
         SetElement iter = u.connections.first();
         !u.connections.overEnd(iter);
         iter = u.connections.next(iter)
       ) {
         Node v = u.connections.retrieve(iter);
-        if (!visited.locate(v)) {
-          queue.enqueue(v);
-          visited.insert(v);
-          v.prev = u; // set the prev field of v to u
+        if (!visited.contains(v)) {
+          queue.add(v);
+          visited.add(v);
+          v.prev = u;
         }
       }
     }
