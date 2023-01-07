@@ -1,111 +1,92 @@
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+
+class Postaja {
+
+  public int index;
+  public ArrayList<Povezava> povezave;
+
+  public Postaja(int index) {
+    this.index = index;
+    povezave = new ArrayList<>();
+  }
+
+  public void dodajPovezavo(Postaja postaja, int linija) {
+    povezave.add(new Povezava(postaja, linija));
+  }
+}
+
+class Povezava {
+
+  public Postaja postaja;
+  public int linija;
+
+  public Povezava(Postaja postaja, int linija) {
+    this.postaja = postaja;
+    this.linija = linija;
+  }
+}
 
 public class Naloga7 {
 
   public static void main(String[] args) throws IOException {
-    // Read input data from file
-    String inputFilePath = args[0];
-    BufferedReader reader = new BufferedReader(new FileReader(inputFilePath));
-    int n = Integer.parseInt(reader.readLine());
-    List<List<Integer>> routes = new ArrayList<>();
-    for (int i = 0; i < n; i++) {
-      String[] routeStr = reader.readLine().split(",");
-      List<Integer> route = new ArrayList<>();
-      for (String stopStr : routeStr) {
-        route.add(Integer.parseInt(stopStr));
+    String inputFile = args[0];
+    String outputFile = args[1];
+
+    BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+    int stLinij = Integer.parseInt(reader.readLine());
+    //mnozica vseh postaj
+    Set<Postaja> postaje = new HashSet<>();
+    //dodajamo linije
+    for (int i = 0; i < stLinij; i++) {
+      String[] linija = reader.readLine().split(",");
+      //prva postaja linije
+      int source = Integer.parseInt(linija[0]);
+      //pogleda ce je postaja ze v mnozici
+      Postaja sPostaja = poisciIndexPostaje(postaje, source);
+      if (sPostaja == null) {
+        //ce je ni naredi novo postajo
+        sPostaja = new Postaja(source);
+        postaje.add(sPostaja);
       }
-      routes.add(route);
+      //dodajamo se ostale postaje v liniji
+      for (int j = 1; j < linija.length; j++) {
+        //naredimo postajo
+        int destination = Integer.parseInt(linija[j]);
+        //pogleda ce je postaja ze v mnozici
+        Postaja dPostaja = poisciIndexPostaje(postaje, destination);
+        if (dPostaja == null) {
+          //ce je ni naredi novo postajo
+          dPostaja = new Postaja(destination);
+          postaje.add(dPostaja);
+        }
+        sPostaja.dodajPovezavo(dPostaja, i);
+        sPostaja = dPostaja;
+      }
     }
-    String[] aAndB = reader.readLine().split(",");
-    int a = Integer.parseInt(aAndB[0]);
-    int b = Integer.parseInt(aAndB[1]);
+    String[] lastLine = reader.readLine().split(",");
+    int source = Integer.parseInt(lastLine[0]);
+    int destination = Integer.parseInt(lastLine[1]);
     reader.close();
 
-    // Build graph representation of public transport system
-    Map<Integer, Map<Integer, List<Integer>>> graph = new HashMap<>();
-    for (int i = 0; i < n; i++) {
-      List<Integer> route = routes.get(i);
-      for (int j = 0; j < route.size() - 1; j++) {
-        int node = route.get(j);
-        int nextNode = route.get(j + 1);
-        if (!graph.containsKey(node)) {
-          graph.put(node, new HashMap<>());
-        }
-        if (!graph.get(node).containsKey(nextNode)) {
-          graph.get(node).put(nextNode, new ArrayList<>());
-        }
-        graph.get(node).get(nextNode).add(i);
-      }
-    }
-
-    // Perform breadth-first search to find minimum number of transfers
-    Queue<int[]> queue = new LinkedList<>();
-    queue.add(new int[] { a, -1, 0 });
-    Set<Integer> visited = new HashSet<>();
-    int minTransfers = -1;
-    while (!queue.isEmpty()) {
-      int[] nodeInfo = queue.poll();
-      int node = nodeInfo[0];
-      int prevLine = nodeInfo[1];
-      int numTransfers = nodeInfo[2];
-      if (node == b) {
-        minTransfers = numTransfers;
-        break;
-      }
-      if (visited.contains(node)) {
-        continue;
-      }
-      visited.add(node);
-      Map<Integer, List<Integer>> neighbors = graph.get(node);
-      if (neighbors == null) {
-        continue;
-      }
-      for (int nextNode : neighbors.keySet()) {
-        for (int line : neighbors.get(nextNode)) {
-          int updatedTransfers = numTransfers;
-          if (line != prevLine) {
-            updatedTransfers++;
-          }
-          queue.add(new int[] { nextNode, line, updatedTransfers });
-        }
-      }
-    }
-
-    // Perform breadth-first search to find minimum number of stops
-    queue.add(new int[] { a, 0 });
-    visited.clear();
-    int minStops = -1;
-    while (!queue.isEmpty()) {
-      int[] nodeInfo = queue.poll();
-      int node = nodeInfo[0];
-      int numStops = nodeInfo[1];
-      if (node == b) {
-        minStops = numStops;
-        break;
-      }
-      if (visited.contains(node)) {
-        continue;
-      }
-      visited.add(node);
-      Map<Integer, List<Integer>> neighbors = graph.get(node);
-      if (neighbors == null) {
-        continue;
-      }
-      for (int nextNode : neighbors.keySet()) {
-        queue.add(new int[] { nextNode, numStops + 1 });
-      }
-    }
-
-    // Determine if there is a route that is simultaneously optimal according to both criteria
-    int optimalRoute = minTransfers == minStops ? 1 : 0;
-
-    // Write results to output file
-    String outputFilePath = args[1];
-    PrintWriter writer = new PrintWriter(outputFilePath);
-    writer.println(minTransfers);
+    PrintWriter writer = new PrintWriter(outputFile);
+    /*writer.println(minTransfers);
     writer.println(minStops);
-    writer.println(optimalRoute);
+    writer.println(minStopsAndTransfers);*/
     writer.close();
+  }
+
+  public static Postaja poisciIndexPostaje(Set<Postaja> set, int index) {
+    for (Postaja p : set) {
+      if (p.index == index) {
+        return p;
+      }
+    }
+    return null;
   }
 }
