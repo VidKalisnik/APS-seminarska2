@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.Set;
 
 class Postaja {
@@ -11,9 +13,17 @@ class Postaja {
   public int index;
   public ArrayList<Povezava> povezave;
 
+  public int najmStPostaj;
+  public int najmStLinij;
+
+  public Postaja prevPostaja;
+  public Postaja prevPostajaPrestopanje;
+
   public Postaja(int index) {
     this.index = index;
     povezave = new ArrayList<>();
+    najmStPostaj = Integer.MAX_VALUE;
+    najmStLinij = Integer.MAX_VALUE;
   }
 
   public void dodajPovezavo(Postaja postaja, int linija) {
@@ -69,16 +79,114 @@ public class Naloga7 {
         sPostaja = dPostaja;
       }
     }
+
     String[] lastLine = reader.readLine().split(",");
-    int source = Integer.parseInt(lastLine[0]);
-    int destination = Integer.parseInt(lastLine[1]);
+    int zacetek = Integer.parseInt(lastLine[0]);
+    int konec = Integer.parseInt(lastLine[1]);
+
+    Postaja zacetna = poisciIndexPostaje(postaje, zacetek);
+    dijkstra(zacetna, null, 0, 0, 0);
+    dijkstra2(zacetna, null, 0, 0, 0, postaje);
     reader.close();
 
+    Postaja koncna = poisciIndexPostaje(postaje, konec);
+    //System.out.println(koncna.najmStLinij);
+    //System.out.println(koncna.najmStPostaj);
     PrintWriter writer = new PrintWriter(outputFile);
-    /*writer.println(minTransfers);
-    writer.println(minStops);
-    writer.println(minStopsAndTransfers);*/
+
+    //ce ne pride do konce postaje
+    if (koncna.najmStLinij == Integer.MAX_VALUE) {
+      writer.println(-1);
+      writer.println(-1);
+      writer.println(-1);
+    } else {
+      writer.println(koncna.najmStLinij);
+      writer.println(koncna.najmStPostaj);
+      writer.println(istaPot(koncna));
+    }
     writer.close();
+  }
+
+  public static int istaPot(Postaja a) {
+    Postaja tmp1 = a.prevPostaja;
+    Postaja tmp2 = a.prevPostajaPrestopanje;
+
+    //System.out.println(tmp1.index);
+    //System.out.println(tmp2.index);
+    while (tmp1 != null || tmp2 != null) {
+      if (!tmp1.equals(tmp2)) {
+        break;
+      }
+      //System.out.println(tmp1.index);
+      //System.out.println(tmp2.index);
+      tmp1 = tmp1.prevPostaja;
+      tmp2 = tmp2.prevPostajaPrestopanje;
+    }
+
+    if (tmp1 == null && tmp2 == null) {
+      return 1;
+    }
+    return 0;
+  }
+
+  public static void dijkstra(
+    Postaja a,
+    Postaja b,
+    int linija,
+    int dolzina,
+    int prestopi
+  ) {
+    //System.out.println(a.najmStLinij + " " + a.najmStPostaj);
+    //ce je dolzina najmanjsa
+    if (dolzina < a.najmStPostaj || dolzina == Integer.MAX_VALUE) {
+      a.prevPostaja = b;
+      a.najmStPostaj = dolzina;
+      //a.najmStLinij = prestopi;
+
+      for (Povezava p : a.povezave) {
+        int prestop = 0;
+        if (p.linija != linija && !a.equals(b)) {
+          prestop = 1;
+        }
+        dijkstra(p.postaja, a, p.linija, dolzina + 1, prestopi + prestop);
+      }
+    }
+  }
+
+  public static void dijkstra2(
+    Postaja a,
+    Postaja b,
+    int linija,
+    int dolzina,
+    int prestopi,
+    Set postaje
+  ) {
+    /*if (b != null) System.out.println(
+      a.index + " " + b.index + "|" + prestopi + " " + a.najmStLinij
+    );*/
+    //ce je dolzina najmanjsa
+    if (prestopi < a.najmStLinij || a.najmStLinij == Integer.MAX_VALUE) {
+      a.prevPostajaPrestopanje = b;
+      /*if (b != null) System.out.println(
+        "*" + a.index + " " + b.index + "|" + prestopi + " " + a.najmStLinij
+      );*/
+      a.najmStLinij = prestopi;
+
+      for (Povezava p : a.povezave) {
+        int prestop = 0;
+        if (p.linija != linija && b != null) {
+          prestop = 1;
+        }
+        dijkstra2(
+          p.postaja,
+          a,
+          p.linija,
+          dolzina + 1,
+          prestopi + prestop,
+          postaje
+        );
+      }
+    }
   }
 
   public static Postaja poisciIndexPostaje(Set<Postaja> set, int index) {
